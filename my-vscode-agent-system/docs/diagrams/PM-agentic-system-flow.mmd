@@ -1,0 +1,95 @@
+graph TD
+    %% Styles
+    classDef artifact fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:black;
+    classDef breakdownAgent fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,stroke-dasharray: 5 5,color:black;
+    classDef refineAgent fill:#ffebee,stroke:#c62828,stroke-width:2px,stroke-dasharray: 5 5,color:black;
+    classDef generateAgent fill:#fff3e0,stroke:#e65100,stroke-width:2px,stroke-dasharray: 5 5,color:black;
+    classDef invisible fill:none,stroke:none;
+
+    %% Legend
+    subgraph Legend
+        direction LR
+        L1(Breakdown Agent):::breakdownAgent
+        L2(Refinement Agent):::refineAgent
+        L3(Generate Agent):::generateAgent
+        L4(Artifact / Document):::artifact
+    end
+
+    subgraph Theme_Level [Theme Level]
+        direction TB
+        Agent_Breakdown_Theme(breakdown-theme):::breakdownAgent
+        Artifact_Theme_PRD(theme-prd.md):::artifact
+    end
+
+    subgraph Epic_Level [Epic Level]
+        direction TB
+        Agent_Breakdown_Epic(breakdown-epic):::breakdownAgent
+        Agent_Generate_Epic(generate-epic):::generateAgent
+        Artifact_Epic_PRD(epic-prd.md):::artifact
+        Agent_Refine_Epic(refine-epic):::refineAgent
+    end
+
+    subgraph Feature_Level [Feature Level]
+        direction TB
+        Agent_Breakdown_Feature(breakdown-feature):::breakdownAgent
+        Agent_Generate_Feature(generate-feature):::generateAgent
+        Artifact_Feature_PRD(feature-prd.md):::artifact
+        Agent_Refine_Feature(refine-feature):::refineAgent
+    end
+
+    subgraph User_Story_Level [User Story Level]
+        direction TB
+        Agent_Generate_US(generate-user-story):::generateAgent
+        Agent_Breakdown_US_Tech(breakdown-user-story-technical):::breakdownAgent
+        Artifact_Tech_Spec(technical-specification.md):::artifact
+        Agent_Breakdown_US_Plan(breakdown-user-story-plan):::breakdownAgent
+        Artifact_Plan(plan.md):::artifact
+        Agent_Breakdown_US_Tasks(breakdown-user-story-tasks):::breakdownAgent
+        Artifact_Tasks(tasks.md):::artifact
+        Agent_Refine_US(refine-user-story):::refineAgent
+    end
+
+    %% Breakdown Stream (Downward - Solid Lines)
+    Agent_Breakdown_Theme -->|Generates| Artifact_Theme_PRD
+    Artifact_Theme_PRD ==>|Context for| Agent_Breakdown_Epic
+    Agent_Breakdown_Epic -->|Generates| Artifact_Epic_PRD
+    Artifact_Epic_PRD ==>|Context for| Agent_Breakdown_Feature
+    Agent_Breakdown_Feature -->|Generates| Artifact_Feature_PRD
+    Artifact_Feature_PRD ==>|Context for| Agent_Breakdown_US_Tech
+    Agent_Breakdown_US_Tech -->|Generates| Artifact_Tech_Spec
+    Artifact_Tech_Spec ==>|Context for| Agent_Breakdown_US_Plan
+    Agent_Breakdown_US_Plan -->|Generates| Artifact_Plan
+    Artifact_Plan ==>|Context for| Agent_Breakdown_US_Tasks
+    Agent_Breakdown_US_Tasks -->|Generates| Artifact_Tasks
+
+    %% Generate Stream (Downward - Orange Lines)
+    Artifact_Theme_PRD -.->|Read Context| Agent_Generate_Epic
+    Agent_Generate_Epic -->|Updates & Adds Epic| Artifact_Theme_PRD
+    Agent_Generate_Epic ==>|Triggers| Agent_Breakdown_Epic
+
+    Artifact_Epic_PRD -.->|Read Context| Agent_Generate_Feature
+    Agent_Generate_Feature -->|Updates & Adds Feature| Artifact_Epic_PRD
+    Agent_Generate_Feature ==>|Triggers| Agent_Breakdown_Feature
+
+    Artifact_Feature_PRD -.->|Read Context| Agent_Generate_US
+    Agent_Generate_US -->|Updates & Adds User Story| Artifact_Feature_PRD
+    Agent_Generate_US ==>|Triggers| Agent_Breakdown_US_Tech
+
+    %% Refinement Stream (Upward - Dotted/Red Lines)
+    Agent_Refine_US -->|Updates| Artifact_Tech_Spec
+    Agent_Refine_US -->|Updates| Artifact_Plan
+    
+    Artifact_Tech_Spec -.->|Triggers Change| Agent_Refine_Feature
+    Agent_Refine_Feature -->|Updates| Artifact_Feature_PRD
+    
+    Artifact_Feature_PRD -.->|Triggers Change| Agent_Refine_Epic
+    Agent_Refine_Epic -->|Updates| Artifact_Epic_PRD
+
+    %% Context Checks (Refinement reads parent - Dotted Lines)
+    Artifact_Feature_PRD -.->|Read Only Context| Agent_Refine_US
+    Artifact_Epic_PRD -.->|Read Only Context| Agent_Refine_Feature
+    Artifact_Theme_PRD -.->|Read Only Context| Agent_Refine_Epic
+
+    %% Context Checks (Generate reads parent - Dotted Lines)
+    Artifact_Theme_PRD -.->|Read Only Context| Agent_Generate_Feature
+    Artifact_Epic_PRD -.->|Read Only Context| Agent_Generate_US

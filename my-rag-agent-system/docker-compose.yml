@@ -1,0 +1,41 @@
+services:
+  # 1. Vector Database
+  pgvector:
+    image: pgvector/pgvector:pg16
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=arkragpass123
+      - POSTGRES_DB=vectors
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # 2. Local LLM & Embeddings Provider
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  # 3. Retrieval Service (The API)
+  retrieval-service:
+    build: ./services/retrieval-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PGVECTOR_HOST=pgvector
+      - PGVECTOR_DB=vectors
+      - PGVECTOR_USER=postgres
+      - PGVECTOR_PASSWORD=arkragpass123
+      - OLLAMA_BASE_URL=http://ollama:11434/v1
+      - EMBEDDING_MODEL=nomic-embed-text
+    depends_on:
+      - pgvector
+      - ollama
+
+volumes:
+  pgdata:
+  ollama_data:
